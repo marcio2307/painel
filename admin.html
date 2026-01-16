@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Administração — Cartomantes Online</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{
+      --bg:#000000;
+      --text:#f2f2f2;
+      --muted:rgba(255,255,255,.70);
+      --gold1:#fff0a6;
+      --gold2:#f6e27a;
+      --gold3:#c7a008;
+      --shadow: 0 16px 55px rgba(0,0,0,.65);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background: var(--bg);
+    }
+
+    /* ===== TELA "PASTAS" ===== */
+    .desktop{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px 14px;
+      background:
+        radial-gradient(900px 420px at 15% 10%, rgba(199,160,8,0.14), rgba(0,0,0,0) 60%),
+        radial-gradient(900px 420px at 85% 20%, rgba(199,160,8,0.10), rgba(0,0,0,0) 60%),
+        radial-gradient(1200px 520px at 50% 120%, rgba(199,160,8,0.08), rgba(0,0,0,0) 65%),
+        #000;
+    }
+
+    .foldersWrap{
+      width:min(1100px, 100%);
+    }
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin:0 0 18px;
+      text-align:center;
+    }
+    .title h1{
+      margin:0;
+      font-family:'Cinzel',serif;
+      font-size: clamp(18px, 2.8vw, 28px);
+      line-height:1.1;
+      color:transparent;
+      background-image:linear-gradient(180deg, var(--gold2) 0%, var(--gold3) 50%, var(--gold1) 85%);
+      -webkit-background-clip:text;
+      background-clip:text;
+      text-shadow:0 0 22px rgba(255,215,0,0.12);
+    }
+
+    .foldersGrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:22px;
+      align-items:start;
+      justify-items:center;
+    }
+
+    /* no celular: uma abaixo da outra */
+    @media (max-width: 720px){
+      .foldersGrid{ grid-template-columns: 1fr; gap:18px; }
+      .folderBtn{ width:min(360px, 92vw); }
+    }
+
+    .folderBtn{
+      border:0;
+      background:transparent;
+      cursor:pointer;
+      text-align:center;
+      padding:8px 10px;
+      border-radius:16px;
+      outline:none;
+      transition: transform .12s ease, filter .12s ease;
+      user-select:none;
+    }
+    .folderBtn:hover{ filter:brightness(1.06); }
+    .folderBtn:active{ transform: translateY(1px); }
+
+    .folderIcon{
+      width:120px;
+      height:92px;
+      margin:0 auto 10px;
+      filter: drop-shadow(0 18px 28px rgba(0,0,0,.55));
+    }
+
+    .folderName{
+      font-weight:900;
+      font-size:13px;
+      letter-spacing:.2px;
+      color:transparent;
+      background-image:linear-gradient(180deg, var(--gold2), var(--gold3));
+      -webkit-background-clip:text;
+      background-clip:text;
+      text-transform:uppercase;
+    }
+
+    /* credenciais / texto abaixo da pasta */
+    .folderHint{
+      margin-top:8px;
+      font-size:11px;
+      color:rgba(255,255,255,.78);
+      line-height:1.25;
+      white-space:pre-line; /* permite quebrar linha com \n */
+      padding:8px 10px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.05);
+      border-radius:12px;
+      display:inline-block;
+      max-width:320px;
+    }
+
+    /* remove “Abrir painel / Abrir link” dos 3 primeiros */
+    .folderHint.hidden{ display:none; }
+
+    /* ===== TELA DOS PAINÉIS ===== */
+    .panelScreen{
+      display:none;
+      min-height:100vh;
+      background:#000;
+    }
+
+    .panelTop{
+      position:sticky;
+      top:0;
+      z-index:10;
+      padding:12px;
+      background: rgba(0,0,0,.85);
+      border-bottom:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(8px);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .panelTop .panelTitle{
+      margin:0;
+      font-size:13px;
+      font-weight:950;
+      letter-spacing:.35px;
+      text-transform:uppercase;
+      color:transparent;
+      background-image:linear-gradient(180deg, var(--gold2), var(--gold3));
+      -webkit-background-clip:text;
+      background-clip:text;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .backBtn{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      border-radius:999px;
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:12px;
+      letter-spacing:.2px;
+      transition:.12s filter ease, .12s transform ease;
+    }
+    .backBtn:hover{ filter:brightness(1.08); }
+    .backBtn:active{ transform:translateY(1px); }
+
+    .frameWrap{ padding:0; }
+    iframe{
+      width:100%;
+      border:0;
+      display:block;
+      background:#000;
+      height: calc(100vh - 56px);
+    }
+    @media (max-width: 720px){
+      iframe{ height: calc(100vh - 60px); }
+      .folderHint{ max-width:min(92vw, 340px); }
+    }
+
+    /* ===== SVG folder (dourado) ===== */
+    .folderFill1{ fill:url(#g1); }
+    .folderFill2{ fill:url(#g2); }
+    .folderStroke{ stroke: rgba(255,255,255,.14); stroke-width:1; }
+  </style>
+</head>
+
+<body>
+
+  <!-- TELA: PASTAS -->
+  <main class="desktop" id="home">
+    <div class="foldersWrap">
+      <div class="title">
+        <h1>Administração</h1>
+      </div>
+
+      <div class="foldersGrid">
+        <!-- 1 (ALTERADO: agora abre link direto do Pai Márcio) -->
+        <button class="folderBtn" type="button"
+          onclick="openExternal('https://marcio-1.onrender.com/admin.html')"
+          aria-label="Abrir Painel Pai Márcio (Render)">
+          <svg class="folderIcon" viewBox="0 0 220 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#fff0a6"/>
+                <stop offset="0.55" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#c7a008"/>
+              </linearGradient>
+              <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ffeaa6"/>
+                <stop offset="0.5" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#b99107"/>
+              </linearGradient>
+            </defs>
+            <path class="folderFill2 folderStroke" d="M18 46c0-9 7-16 16-16h54c7 0 12 3 16 9l8 12h74c9 0 16 7 16 16v74c0 9-7 16-16 16H34c-9 0-16-7-16-16V46z"/>
+            <path class="folderFill1 folderStroke" d="M18 64h184c9 0 16 7 16 16v61c0 9-7 16-16 16H34c-9 0-16-7-16-16V64z" opacity=".96"/>
+            <path d="M28 70h164" stroke="rgba(0,0,0,.18)" stroke-width="2" opacity=".25"/>
+          </svg>
+          <div class="folderName">Notificações Pai Márcio</div>
+          <div class="folderHint hidden"></div>
+        </button>
+
+        <!-- 2 (já era link externo) -->
+        <button class="folderBtn" type="button" onclick="openExternal('https://teste1-y25k.onrender.com/admin.html')" aria-label="Abrir Painel Cartomantes Online">
+          <svg class="folderIcon" viewBox="0 0 220 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+            <defs>
+              <linearGradient id="g1b" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#fff0a6"/>
+                <stop offset="0.55" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#c7a008"/>
+              </linearGradient>
+              <linearGradient id="g2b" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ffeaa6"/>
+                <stop offset="0.5" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#b99107"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#g2b)" class="folderStroke" d="M18 46c0-9 7-16 16-16h54c7 0 12 3 16 9l8 12h74c9 0 16 7 16 16v74c0 9-7 16-16 16H34c-9 0-16-7-16-16V46z"/>
+            <path fill="url(#g1b)" class="folderStroke" d="M18 64h184c9 0 16 7 16 16v61c0 9-7 16-16 16H34c-9 0-16-7-16-16V64z" opacity=".96"/>
+            <path d="M28 70h164" stroke="rgba(0,0,0,.18)" stroke-width="2" opacity=".25"/>
+          </svg>
+          <div class="folderName">Notificações Cartomantes</div>
+          <div class="folderHint hidden"></div>
+        </button>
+
+        <!-- 3 -->
+        <button class="folderBtn" type="button" onclick="openPanel('coletivo')" aria-label="Abrir Painel do Coletivo">
+          <svg class="folderIcon" viewBox="0 0 220 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+            <defs>
+              <linearGradient id="g1c" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#fff0a6"/>
+                <stop offset="0.55" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#c7a008"/>
+              </linearGradient>
+              <linearGradient id="g2c" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ffeaa6"/>
+                <stop offset="0.5" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#b99107"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#g2c)" class="folderStroke" d="M18 46c0-9 7-16 16-16h54c7 0 12 3 16 9l8 12h74c9 0 16 7 16 16v74c0 9-7 16-16 16H34c-9 0-16-7-16-16V46z"/>
+            <path fill="url(#g1c)" class="folderStroke" d="M18 64h184c9 0 16 7 16 16v61c0 9-7 16-16 16H34c-9 0-16-7-16-16V64z" opacity=".96"/>
+            <path d="M28 70h164" stroke="rgba(0,0,0,.18)" stroke-width="2" opacity=".25"/>
+          </svg>
+          <div class="folderName">Painel do Coletivo</div>
+          <div class="folderHint hidden"></div>
+        </button>
+
+        <!-- 4 (link externo) -->
+        <button class="folderBtn" type="button" onclick="openExternal('https://divpag.com/login')" aria-label="Abrir Divpag">
+          <svg class="folderIcon" viewBox="0 0 220 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+            <defs>
+              <linearGradient id="g1d" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#fff0a6"/>
+                <stop offset="0.55" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#c7a008"/>
+              </linearGradient>
+              <linearGradient id="g2d" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ffeaa6"/>
+                <stop offset="0.5" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#b99107"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#g2d)" class="folderStroke" d="M18 46c0-9 7-16 16-16h54c7 0 12 3 16 9l8 12h74c9 0 16 7 16 16v74c0 9-7 16-16 16H34c-9 0-16-7-16-16V46z"/>
+            <path fill="url(#g1d)" class="folderStroke" d="M18 64h184c9 0 16 7 16 16v61c0 9-7 16-16 16H34c-9 0-16-7-16-16V64z" opacity=".96"/>
+            <path d="M28 70h164" stroke="rgba(0,0,0,.18)" stroke-width="2" opacity=".25"/>
+          </svg>
+          <div class="folderName">Divpag</div>
+          <div class="folderHint">Usuário: paimarcio
+Senha: Marcio2307.</div>
+        </button>
+
+        <!-- 5 (link externo) -->
+        <button class="folderBtn" type="button" onclick="openExternal('https://www.playfiver.app/login')" aria-label="Abrir Playfiver">
+          <svg class="folderIcon" viewBox="0 0 220 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+            <defs>
+              <linearGradient id="g1e" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#fff0a6"/>
+                <stop offset="0.55" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#c7a008"/>
+              </linearGradient>
+              <linearGradient id="g2e" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ffeaa6"/>
+                <stop offset="0.5" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#b99107"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#g2e)" class="folderStroke" d="M18 46c0-9 7-16 16-16h54c7 0 12 3 16 9l8 12h74c9 0 16 7 16 16v74c0 9-7 16-16 16H34c-9 0-16-7-16-16V46z"/>
+            <path fill="url(#g1e)" class="folderStroke" d="M18 64h184c9 0 16 7 16 16v61c0 9-7 16-16 16H34c-9 0-16-7-16-16V64z" opacity=".96"/>
+            <path d="M28 70h164" stroke="rgba(0,0,0,.18)" stroke-width="2" opacity=".25"/>
+          </svg>
+          <div class="folderName">Playfiver</div>
+          <div class="folderHint">Email: marciodoxosse@gmail.com
+Senha: marcio2307</div>
+        </button>
+
+        <!-- 6 (link externo) -->
+        <button class="folderBtn" type="button" onclick="openExternal('https://ourocassino.com.br/admin')" aria-label="Abrir Ouro Cassino">
+          <svg class="folderIcon" viewBox="0 0 220 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+            <defs>
+              <linearGradient id="g1f" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#fff0a6"/>
+                <stop offset="0.55" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#c7a008"/>
+              </linearGradient>
+              <linearGradient id="g2f" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ffeaa6"/>
+                <stop offset="0.5" stop-color="#f6e27a"/>
+                <stop offset="1" stop-color="#b99107"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#g2f)" class="folderStroke" d="M18 46c0-9 7-16 16-16h54c7 0 12 3 16 9l8 12h74c9 0 16 7 16 16v74c0 9-7 16-16 16H34c-9 0-16-7-16-16V46z"/>
+            <path fill="url(#g1f)" class="folderStroke" d="M18 64h184c9 0 16 7 16 16v61c0 9-7 16-16 16H34c-9 0-16-7-16-16V64z" opacity=".96"/>
+            <path d="M28 70h164" stroke="rgba(0,0,0,.18)" stroke-width="2" opacity=".25"/>
+          </svg>
+          <div class="folderName">Ouro Cassino</div>
+          <div class="folderHint">Email: admin@eu.com
+Senha: Resident4567#</div>
+        </button>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- TELA: PAINEL (abre ao clicar) -->
+  <section class="panelScreen" id="panel">
+    <div class="panelTop">
+      <button class="backBtn" type="button" onclick="goHome()">⬅ Voltar</button>
+      <h2 class="panelTitle" id="panelTitle">—</h2>
+      <span style="width:84px"></span>
+    </div>
+    <div class="frameWrap">
+      <iframe id="frameMain" title="Painel"></iframe>
+    </div>
+  </section>
+
+  <!-- ===========================
+       TEMPLATES (seus códigos)
+       (não mistura nada: cada um roda isolado via iframe srcdoc)
+  ============================ -->
+
+  <template id="tplColetivo">
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Painel - Coletivo</title>
+  <style>
+    :root{
+      --bg:#0a0a0a;
+      --card:#0f0f0f;
+      --line:#242424;
+      --text:#f2f2f2;
+      --muted:#bdbdbd;
+      --ok:#18d86b;
+      --ok2:#12b85a;
+      --warn:#ffcc00;
+      --bad:#ff4d4d;
+      --red:#ff1e1e;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      padding:22px;
+    }
+    .wrap{width:min(980px,100%); margin:0 auto}
+    h1{
+      margin:0 0 6px;
+      color:var(--red);
+      font-size:clamp(20px, 3vw, 30px);
+      font-weight:950;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+    }
+    .sub{margin:0 0 18px; color:var(--muted); font-size:14px}
+    .card{
+      background:linear-gradient(180deg, #101010, #0b0b0b);
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow: 0 16px 55px rgba(0,0,0,.45);
+    }
+    .content{padding:16px; display:grid; gap:14px}
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    label{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-weight:800;
+      font-size:13px;
+      color:#e8e8e8;
+    }
+    input, textarea{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#0b0b0b;
+      color:var(--text);
+      padding:12px 12px;
+      font-size:14px;
+      outline:none;
+    }
+    textarea{min-height:110px; resize:vertical}
+    .media{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#080808;
+      overflow:hidden;
+    }
+    .preview{
+      width:100%;
+      aspect-ratio:16/9;
+      background:#060606;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#666;
+      font-size:14px;
+      position:relative;
+    }
+    .preview img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:none;
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:14px;
+      border-top:1px solid var(--line);
+      background:#090909;
+    }
+    .btn{
+      border:none;
+      border-radius:12px;
+      padding:12px 14px;
+      font-weight:950;
+      cursor:pointer;
+      font-size:14px;
+      transition:.15s transform ease, .15s opacity ease;
+    }
+    .btn:active{transform:scale(.985)}
+    .btn-ok{
+      background:linear-gradient(180deg, var(--ok), var(--ok2));
+      color:#001b0c;
+    }
+    .btn-ghost{
+      background:#121212;
+      color:#f1f1f1;
+      border:1px solid var(--line);
+    }
+    .status{
+      padding:12px 14px;
+      border-radius:12px;
+      border:1px dashed #2b2b2b;
+      background:#0a0a0a;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .status b{color:#fff}
+    .warn{color:var(--warn)}
+    .bad{color:var(--bad)}
+    @media (max-width:720px){ .row{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>PAINEL DO COLETIVO</h1>
+    <p class="sub">Cadastre título, descrição, data, valor, vagas e envie a imagem. Ao salvar, aparece automaticamente no <b>reserva.html</b>.</p>
+
+    <div class="card">
+      <div class="content">
+        <div class="status" id="status">
+          <b>Status:</b> aguardando…
+        </div>
+
+        <div class="row">
+          <label>
+            Título
+            <input id="titulo" placeholder="Ex: Coletivo de Sábado" />
+          </label>
+
+          <label>
+            Data
+            <input id="data" placeholder="Ex: 20/01/2026 às 19h" />
+          </label>
+        </div>
+
+        <div class="row">
+          <label>
+            Valor
+            <input id="valor" placeholder="Ex: 50,00" />
+          </label>
+
+          <label>
+            Número de vagas
+            <input id="vagas" type="number" min="0" step="1" placeholder="Ex: 30" />
+          </label>
+        </div>
+
+        <label>
+          Descrição
+          <textarea id="descricao" placeholder="Escreva a descrição do evento…"></textarea>
+        </label>
+
+        <div class="media">
+          <div class="preview">
+            <img id="imgPreview" alt="Prévia da imagem" />
+            <div id="ph">Selecione uma imagem para enviar (galeria).</div>
+          </div>
+          <div class="actions">
+            <input id="arquivo" type="file" accept="image/*" />
+            <button class="btn btn-ghost" id="btnCarregar">Carregar dados atuais</button>
+            <button class="btn btn-ok" id="btnSalvar">Salvar evento</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getDatabase, ref, get, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAg7SXLTDxayT0Czs7-sW5s0_nx7nkDgVo",
+      authDomain: "coletivo2025-9de23.firebaseapp.com",
+      databaseURL: "https://coletivo2025-9de23-default-rtdb.firebaseio.com",
+      projectId: "coletivo2025-9de23",
+      storageBucket: "coletivo2025-9de23.firebasestorage.app",
+      messagingSenderId: "740866367489",
+      appId: "1:740866367489:web:963e3f5be80cb35a71e000"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const storage = getStorage(app);
+
+    const $ = (id) => document.getElementById(id);
+    const statusEl = $("status");
+    const img = $("imgPreview");
+    const ph = $("ph");
+    const fileInput = $("arquivo");
+
+    let selectedFile = null;
+    let currentImageUrl = "";
+
+    function setStatus(html){
+      statusEl.innerHTML = "<b>Status:</b> " + html;
+    }
+
+    function moneyRaw(v){
+      return String(v ?? "").trim();
+    }
+
+    function safeInt(v){
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0) return 0;
+      return Math.floor(n);
+    }
+
+    fileInput.addEventListener("change", (e) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      selectedFile = f;
+
+      const url = URL.createObjectURL(f);
+      img.src = url;
+      img.style.display = "block";
+      ph.style.display = "none";
+    });
+
+    async function carregarAtual(){
+      setStatus("carregando dados atuais…");
+      try{
+        const snap = await get(ref(db, "eventoAtual"));
+        const ev = snap.val();
+        if (!ev){
+          setStatus("<span class='warn'>nenhum evento cadastrado ainda</span>");
+          return;
+        }
+
+        $("titulo").value = ev.titulo || "";
+        $("descricao").value = ev.descricao || "";
+        $("data").value = ev.data || "";
+        $("valor").value = ev.valor || "";
+        $("vagas").value = (ev.vagas ?? "");
+
+        currentImageUrl = ev.imagemUrl || "";
+
+        if (currentImageUrl){
+          img.src = currentImageUrl;
+          img.style.display = "block";
+          ph.style.display = "none";
+        } else {
+          img.removeAttribute("src");
+          img.style.display = "none";
+          ph.style.display = "block";
+        }
+
+        setStatus("dados carregados.");
+      } catch(err){
+        console.error(err);
+        setStatus("<span class='bad'>erro ao carregar</span>");
+      }
+    }
+
+    async function uploadImagemSeTiver(){
+      if (!selectedFile) return currentImageUrl || "";
+
+      setStatus("enviando imagem para o Firebase Storage…");
+
+      const ext = (selectedFile.name.split(".").pop() || "jpg").toLowerCase();
+      const fileName = `eventoAtual_${Date.now()}.${ext}`;
+      const path = `coletivo/eventos/${fileName}`;
+
+      const storageRef = sRef(storage, path);
+
+      await uploadBytes(storageRef, selectedFile, {
+        contentType: selectedFile.type || "image/jpeg"
+      });
+
+      const url = await getDownloadURL(storageRef);
+      currentImageUrl = url;
+      return url;
+    }
+
+    async function salvar(){
+      const titulo = $("titulo").value.trim();
+      const descricao = $("descricao").value.trim();
+      const data = $("data").value.trim();
+      const valor = moneyRaw($("valor").value);
+      const vagas = safeInt($("vagas").value);
+
+      if (!titulo || !data || !valor){
+        setStatus("<span class='warn'>preencha pelo menos: título, data e valor</span>");
+        return;
+      }
+
+      try{
+        const imagemUrl = await uploadImagemSeTiver();
+
+        setStatus("salvando no banco…");
+
+        const payload = {
+          titulo,
+          descricao,
+          data,
+          valor,
+          vagas,
+          imagemUrl: imagemUrl || "",
+          updatedAt: serverTimestamp()
+        };
+
+        await set(ref(db, "eventoAtual"), payload);
+
+        setStatus("✅ salvo com sucesso! (já aparece no reserva.html)");
+        selectedFile = null;
+        fileInput.value = "";
+
+      } catch(err){
+        console.error(err);
+        setStatus("<span class='bad'>erro ao salvar (verifique regras do Firebase)</span>");
+      }
+    }
+
+    $("btnCarregar").addEventListener("click", carregarAtual);
+    $("btnSalvar").addEventListener("click", salvar);
+
+    carregarAtual();
+  </script>
+</body>
+</html>
+  </template>
+
+  <script>
+    // ============
+    // Abre o painel escolhido carregando o srcdoc do template no iframe
+    // ============
+    const home = document.getElementById("home");
+    const panel = document.getElementById("panel");
+    const frameMain = document.getElementById("frameMain");
+    const panelTitle = document.getElementById("panelTitle");
+
+    const titles = {
+      coletivo: "Painel do Coletivo"
+    };
+
+    function openPanel(which){
+      const tplId = "tplColetivo";
+      const html = document.getElementById(tplId).innerHTML.trim();
+
+      panelTitle.textContent = titles[which] || "Painel";
+      frameMain.srcdoc = html;
+
+      home.style.display = "none";
+      panel.style.display = "block";
+
+      location.hash = which;
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+
+    function openExternal(url){
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+
+    function goHome(){
+      frameMain.srcdoc = "";
+      panel.style.display = "none";
+      home.style.display = "flex";
+      location.hash = "";
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+
+    (function boot(){
+      const h = (location.hash || "").replace("#","");
+      if(h === "coletivo"){
+        openPanel(h);
+      }else{
+        home.style.display = "flex";
+        panel.style.display = "none";
+      }
+    })();
+  </script>
+
+</body>
+</html>
+
